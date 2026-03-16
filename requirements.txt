@@ -4,3 +4,4 @@ pandas
 yfinance
 qiskit
 gunicorn 
+qiskit-aer
