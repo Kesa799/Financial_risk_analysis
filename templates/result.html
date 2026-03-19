@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Risk Result</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Analysis Result</h1>
+
+    <div class="result-box">
+        <p>Stock: <span>{{ stock }}</span></p>
+        <p>Expected Return: <span>{{ expected_return }}%</span></p>
+        <p>Volatility: <span>{{ volatility }}%</span></p>
+        <p>Value at Risk: <span>{{ VaR }}%</span></p>
+        <p>Quantum Risk Probability: <span>{{ risk }}</span></p>
+    </div>
+</div>
+
+<a href="/">Analyze Another Stock</a>
+
+</body>
+
+</html>
+
