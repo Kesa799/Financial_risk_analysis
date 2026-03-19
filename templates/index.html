@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Quantum Risk Analyzer</h1>
+
+    <form action="/analyze" method="post">
+        <label>Stock Symbol</label>
+        <input type="text" name="stock" required>
+
+        <label>Investment Amount</label>
+        <input type="number" name="amount" required>
+
+        <label>Time Horizon (years)</label>
+        <input type="number" name="time" required>
+
+        <button type="submit">Analyze</button>
+    </form>
+</div>
+
+</body>
+</html>
