@@ -1,66 +1,84 @@
-
-from flask import Flask, render_template, request
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from quantum_risk import quantum_risk_analysis
+from quantum_risk import quantumriskanalysis
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
-
 @app.route('/')
 def home():
-    return render_template("index.html")
-
+    return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-
-    stock = request.form['stock']
-    amount = float(request.form['amount'])
-    time_horizon = int(request.form['time'])
-
     try:
+        raw_symbol = request.form.get('stock').upper()
+        
+        # --- FIX: Support Indian Stocks Automatically ---
+        # Checks if it's a 3-5 letter symbol without a suffix (like TCS)
+        # and tries adding .NS for National Stock Exchange.
+        ticker_options = [raw_symbol]
+        if not ("." in raw_symbol):
+            ticker_options.append(f"{raw_symbol}.NS")
 
-        ticker = yf.Ticker(stock)
-        data = ticker.history(period="1y")
+        data = pd.DataFrame()
+        final_symbol = raw_symbol
+        
+        for t in ticker_options:
+            ticker = yf.Ticker(t)
+            data = ticker.history(period="1y")
+            if not data.empty:
+                final_symbol = t
+                break
 
         if data.empty:
-            return f"Error: Could not fetch stock data for {stock}"
+            return f"Error: No data found for {raw_symbol}. Try adding .NS for Indian stocks.", 400
 
-        # Daily returns
-        data['returns'] = data['Close'].pct_change()
-        returns = data['returns'].dropna()
+        # --- FIX: Log Returns for Stability ---
+        # log(P_today / P_yesterday) prevents exponential explosion
+        log_returns = np.log(data['Close'] / data['Close'].shift(1)).dropna()
+        
+        # Annualized Mean and Volatility
+        mu = log_returns.mean() * 252
+        sigma = log_returns.std() * np.sqrt(252)
 
-        if returns.empty:
-            return "Error: Not enough data."
+        # --- FIX: The "Reality Check" Cap ---
+        # Caps the expected growth at 200% to ensure the Quantum model 
+        # still sees risk even for high-flyers like NVDA
+        mu_capped = max(-2.0, min(2.0, mu))
 
-        # Expected annual return
-        expected_return = round(returns.mean() * 252 * 100, 2)
+        investment = float(request.form.get('amount'))
+        T = float(request.form.get('years', 1))
 
-        # Annual volatility
-        volatility = round(returns.std() * np.sqrt(252) * 100, 2)
+        # Perform Quantum Analysis
+        result = quantumriskanalysis(mu_capped, sigma, T, investment)
 
-        # Value at Risk (95%)
-        VaR = round(np.percentile(returns, 5) * 100, 2)
-
-        # Quantum risk probability
-        risk = quantum_risk_analysis(returns.std())
+        # Determine Status
+        risk_val = result['risk_probability']
+        if risk_val < 30:
+            status = "Low Risk"
+        elif risk_val < 60:
+            status = "Moderate Risk"
+        elif risk_val < 80:
+            status = "High Risk"
+        else:
+            status = "Extremely high risk"
 
         return render_template(
-            "result.html",
-            stock=stock,
-            expected_return=expected_return,
-            volatility=volatility,
-            VaR=VaR,
-            risk=risk
+            'result.html',
+            stock=final_symbol,
+            risk=result['risk_probability'],
+            expected_return=result['expected_return'],
+            volatility=round(sigma * 100, 2),
+            VaR=result['VaR'],
+            status=status,
+            dates=data.index.strftime('%Y-%m-%d').tolist(),
+            prices=data['Close'].tolist()
         )
 
     except Exception as e:
-        return f"Error occurred: {str(e)}"
+        return f"An unexpected error occurred: {e}", 500
 
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    app.run(debug=True)
