@@ -1,25 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Risk Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="container">
-    <h1>Quantum Risk Analyzer</h1>
+    <div class="result-container">
+        <div class="card">
+            <h1>Quantum Risk Analyzer</h1>
+            
+            <form action="/analyze" method="POST">
+                <div class="input-group">
+                    <label for="stock">Stock Symbol</label>
+                    <input type="text" id="stock" name="stock" placeholder="e.g. AAPL, BTC-USD" required>
+                </div>
 
-    <form action="/analyze" method="post">
-        <label>Stock Symbol</label>
-        <input type="text" name="stock" required>
+                <div class="input-group">
+                    <label for="amount">Investment Amount</label>
+                    <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
+                </div>
 
-        <label>Investment Amount</label>
-        <input type="number" name="amount" required>
+                <div class="input-group">
+                    <label for="years">Time Horizon (years)</label>
+                    <input type="number" step="0.1" id="years" name="years" placeholder="e.g. 1, 0.5" required>
+                </div>
 
-        <label>Time Horizon (years)</label>
-        <input type="number" name="time" required>
-
-        <button type="submit">Analyze</button>
-    </form>
-</div>
-
+                <button type="submit" class="analyze-btn">Analyze</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
